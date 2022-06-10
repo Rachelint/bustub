@@ -134,6 +134,11 @@ class HashTableDirectoryPage {
   uint32_t Size();
 
   /**
+   * @return the current directory size
+   */
+  bool IsFull();
+
+  /**
    * Gets the local depth of the bucket at bucket_idx
    *
    * @param bucket_idx the bucket index to lookup

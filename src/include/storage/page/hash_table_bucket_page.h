@@ -86,6 +86,11 @@ class HashTableBucketPage {
   void RemoveAt(uint32_t bucket_idx);
 
   /**
+   * Insert the KV pair at bucket_idx，escape checking
+   */
+  void InsertAt(uint32_t bucket_idx, KeyType key, ValueType value);
+
+  /**
    * Returns whether or not an index is occupied (key/value pair or tombstone)
    *
    * @param bucket_idx index to look at
@@ -137,12 +142,28 @@ class HashTableBucketPage {
    */
   void PrintBucket();
 
+  // add by me
+  /**
+   * @brief it will be used while delete
+   *
+   * @param bucket_idx
+   */
+  uint32_t Capacity() { return BUCKET_ARRAY_SIZE; }
+
  private:
+  /**
+   * @brief scan once, get values of key and tomb
+   *
+   */
+  // num readable
+  uint32_t num_readable_;
   //  For more on BUCKET_ARRAY_SIZE see storage/page/hash_table_page_defs.h
   char occupied_[(BUCKET_ARRAY_SIZE - 1) / 8 + 1];
   // 0 if tombstone/brand new (never occupied), 1 otherwise.
   char readable_[(BUCKET_ARRAY_SIZE - 1) / 8 + 1];
+  // too hack, guy!
   MappingType array_[0];
+  // array must must must place in last, it is a array, not a pointer, fuck
 };
 
 }  // namespace bustub

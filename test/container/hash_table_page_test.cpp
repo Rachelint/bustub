@@ -23,7 +23,7 @@
 namespace bustub {
 
 // NOLINTNEXTLINE
-TEST(HashTablePageTest, DISABLED_DirectoryPageSampleTest) {
+TEST(HashTablePageTest, DirectoryPageSampleTest) {
   DiskManager *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManagerInstance(5, disk_manager);
 
@@ -48,6 +48,12 @@ TEST(HashTablePageTest, DISABLED_DirectoryPageSampleTest) {
     EXPECT_EQ(i, directory_page->GetBucketPageId(i));
   }
 
+  // incr and check
+  directory_page->IncrGlobalDepth();
+  directory_page->IncrGlobalDepth();
+  directory_page->IncrGlobalDepth();
+  directory_page->VerifyIntegrity();
+
   // unpin the directory page now that we are done
   bpm->UnpinPage(directory_page_id, true, nullptr);
   disk_manager->ShutDown();
@@ -57,7 +63,7 @@ TEST(HashTablePageTest, DISABLED_DirectoryPageSampleTest) {
 }
 
 // NOLINTNEXTLINE
-TEST(HashTablePageTest, DISABLED_BucketPageSampleTest) {
+TEST(HashTablePageTest, BucketPageSampleTest) {
   DiskManager *disk_manager = new DiskManager("test.db");
   auto *bpm = new BufferPoolManagerInstance(5, disk_manager);
 
