@@ -18,10 +18,32 @@ namespace bustub {
 
 DeleteExecutor::DeleteExecutor(ExecutorContext *exec_ctx, const DeletePlanNode *plan,
                                std::unique_ptr<AbstractExecutor> &&child_executor)
-    : AbstractExecutor(exec_ctx) {}
+    : AbstractExecutor(exec_ctx), plan_(plan), child_executor_(std::move(child_executor)) {}
 
-void DeleteExecutor::Init() {}
+void DeleteExecutor::Init() {
+  table_info_ = exec_ctx_->GetCatalog()->GetTable(plan_->TableOid());
+  index_infos_ = exec_ctx_->GetCatalog()->GetTableIndexes(table_info_->name_);
+  child_executor_->Init();
+}
 
-bool DeleteExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) { return false; }
+bool DeleteExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
+  // select from child
+  RID deleted_rid;
+  Tuple deleted_tuple;
+  // get updated rid
+  if (!child_executor_->Next(&deleted_tuple, &deleted_rid)) {
+    return false;
+  }
+
+  // delete in table and index
+  table_info_->table_->ApplyDelete(deleted_rid, exec_ctx_->GetTransaction());
+  for (auto index_info : index_infos_) {
+    index_info->index_->DeleteEntry(
+        deleted_tuple.KeyFromTuple(table_info_->schema_, index_info->key_schema_, index_info->index_->GetKeyAttrs()),
+        deleted_rid, exec_ctx_->GetTransaction());
+  }
+
+  return true;
+}
 
 }  // namespace bustub

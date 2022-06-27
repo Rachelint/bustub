@@ -13,13 +13,61 @@
 #pragma once
 
 #include <memory>
+#include <unordered_set>
 #include <utility>
+#include <vector>
 
+#include "common/util/hash_util.h"
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/distinct_plan.h"
 
+namespace std {
+template <typename>
+struct hash;
+}
+
 namespace bustub {
 
+/** DistinctKey represents a key in an aggregation operation */
+struct DistinctKey {
+  /** The group-by values */
+  std::vector<Value> vals_;
+
+  /**
+   * Compares two aggregate keys for equality.
+   * @param other the other aggregate key to be compared with
+   * @return `true` if both aggregate keys have equivalent group-by expressions, `false` otherwise
+   */
+  bool operator==(const DistinctKey &other) const {
+    for (uint32_t i = 0; i < other.vals_.size(); i++) {
+      if (vals_[i].CompareEquals(other.vals_[i]) != CmpBool::CmpTrue) {
+        return false;
+      }
+    }
+    return true;
+  }
+};
+}  // namespace bustub
+
+namespace std {
+
+/** Implements std::hash on DistinctKey */
+template <>
+struct hash<bustub::DistinctKey> {
+  std::size_t operator()(const bustub::DistinctKey &dis_key) const {
+    size_t curr_hash = 0;
+    for (const auto &key : dis_key.vals_) {
+      if (!key.IsNull()) {
+        curr_hash = bustub::HashUtil::CombineHashes(curr_hash, bustub::HashUtil::HashValue(&key));
+      }
+    }
+    return curr_hash;
+  }
+};
+
+}  // namespace std
+
+namespace bustub {
 /**
  * DistinctExecutor removes duplicate rows from child ouput.
  */
@@ -53,5 +101,6 @@ class DistinctExecutor : public AbstractExecutor {
   const DistinctPlanNode *plan_;
   /** The child executor from which tuples are obtained */
   std::unique_ptr<AbstractExecutor> child_executor_;
+  std::unordered_set<DistinctKey> dis_set_;
 };
 }  // namespace bustub

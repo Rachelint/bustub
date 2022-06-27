@@ -13,15 +13,48 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
 #include <utility>
 
+#include "common/util/hash_util.h"
 #include "execution/executor_context.h"
 #include "execution/executors/abstract_executor.h"
 #include "execution/plans/hash_join_plan.h"
 #include "storage/table/tuple.h"
 
 namespace bustub {
+/** AggregateKey represents a key in an aggregation operation */
+struct JoinKey {
+  /** The group-by values */
+  bustub::Value val_;
 
+  /**
+   * Compares two aggregate keys for equality.
+   * @param other the other aggregate key to be compared with
+   * @return `true` if both aggregate keys have equivalent group-by expressions, `false` otherwise
+   */
+  bool operator==(const JoinKey &other) const { return val_.CompareEquals(other.val_) == CmpBool::CmpTrue; }
+};
+
+}  // namespace bustub
+
+namespace std {
+
+/** Implements std::hash on JoinKey */
+template <>
+struct hash<bustub::JoinKey> {
+  std::size_t operator()(const bustub::JoinKey &join_key) const {
+    size_t curr_hash = 0;
+    if (!join_key.val_.IsNull()) {
+      curr_hash = bustub::HashUtil::CombineHashes(curr_hash, bustub::HashUtil::HashValue(&(join_key.val_)));
+    }
+    return curr_hash;
+  }
+};
+
+}  // namespace std
+
+namespace bustub {
 /**
  * HashJoinExecutor executes a nested-loop JOIN on two tables.
  */
@@ -52,8 +85,13 @@ class HashJoinExecutor : public AbstractExecutor {
   const Schema *GetOutputSchema() override { return plan_->OutputSchema(); };
 
  private:
+  Tuple GetJoinTuple(const Tuple &out_tuple, const Tuple &in_tuple);
+
   /** The NestedLoopJoin plan node to be executed. */
   const HashJoinPlanNode *plan_;
+  std::unique_ptr<AbstractExecutor> out_executor_;
+  std::unique_ptr<AbstractExecutor> in_executor_;
+  std::unordered_map<JoinKey, Tuple> in_tuples_;
 };
 
 }  // namespace bustub
