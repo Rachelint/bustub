@@ -149,7 +149,7 @@ struct BuckWlatch {
  * @return the downcasted 32-bit hash
  */
 template <typename KeyType, typename ValueType, typename KeyComparator>
-uint32_t HASH_TABLE_TYPE::Hash(KeyType key) {
+auto HASH_TABLE_TYPE::Hash(KeyType key) -> uint32_t {
   return static_cast<uint32_t>(hash_fn_.GetHash(key));
 }
 
@@ -459,7 +459,7 @@ bool HASH_TABLE_TYPE::Merge(Transaction *transaction, const KeyType &key, const 
  * GETGLOBALDEPTH - DO NOT TOUCH
  *****************************************************************************/
 template <typename KeyType, typename ValueType, typename KeyComparator>
-uint32_t HASH_TABLE_TYPE::GetGlobalDepth() {
+auto HASH_TABLE_TYPE::GetGlobalDepth() -> uint32_t {
   table_latch_.RLock();
   HashTableDirectoryPage *dir_page = FetchDirectoryPage();
   uint32_t global_depth = dir_page->GetGlobalDepth();

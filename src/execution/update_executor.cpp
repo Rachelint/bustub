@@ -32,6 +32,7 @@ bool UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
   if (!child_executor_->Next(&updated_tuple, &updated_rid)) {
     return false;
   }
+
   // get updated tuple
   RID new_rid;
   Tuple new_tuple = GenerateUpdatedTuple(updated_tuple);
@@ -53,7 +54,7 @@ bool UpdateExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
   return true;
 }
 
-Tuple UpdateExecutor::GenerateUpdatedTuple(const Tuple &src_tuple) {
+auto UpdateExecutor::GenerateUpdatedTuple(const Tuple &src_tuple) -> Tuple {
   const auto &update_attrs = plan_->GetUpdateAttr();
   Schema schema = table_info_->schema_;
   uint32_t col_count = schema.GetColumnCount();

@@ -59,7 +59,6 @@ bool InsertExecutor::Next([[maybe_unused]] Tuple *tuple, RID *rid) {
   RID child_rid;
   // not found or end
   if (!child_executor_->Next(&child_tuple, &child_rid)) {
-    LOG_DEBUG("child(always seq) finish");
     return false;
   }
   InsertOneTuple(&child_tuple);

@@ -62,7 +62,7 @@ void BufferPoolManagerInstance::FlushAllPgsImp() {
   }
 }
 
-Page *BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) {
+auto BufferPoolManagerInstance::NewPgImp(page_id_t *page_id) -> Page * {
   // 0.   Make sure you call AllocatePage!
   // 1.   If all the pages in the buffer pool are pinned, return nullptr.
   // 2.   Pick a victim page P from either the free list or the replacer. Always pick from the free list first.
@@ -158,7 +158,7 @@ bool BufferPoolManagerInstance::UnpinPgImp(page_id_t page_id, bool is_dirty) {
   return true;
 }
 
-bool BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) {
+auto BufferPoolManagerInstance::DeletePgImp(page_id_t page_id) -> bool {
   // 0.   Make sure you call DeallocatePage!
   // 1.   Search the page table for the requested page (P).
   // 1.   If P does not exist, return true.
@@ -243,7 +243,7 @@ bool BufferPoolManagerInstance::FlushPgImpInner(page_id_t page_id) {
   return true;
 }
 
-page_id_t BufferPoolManagerInstance::AllocatePage() {
+auto BufferPoolManagerInstance::AllocatePage() -> page_id_t {
   const page_id_t next_page_id = next_page_id_;
   next_page_id_ += num_instances_;
   ValidatePageId(next_page_id);

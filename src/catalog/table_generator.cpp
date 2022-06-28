@@ -7,7 +7,7 @@
 namespace bustub {
 
 template <typename CppType>
-std::vector<Value> TableGenerator::GenNumericValues(ColumnInsertMeta *col_meta, uint32_t count) {
+auto TableGenerator::GenNumericValues(ColumnInsertMeta *col_meta, uint32_t count) -> std::vector<Value> {
   std::vector<Value> values{};
   values.reserve(count);
 
@@ -43,7 +43,7 @@ std::vector<Value> TableGenerator::GenNumericValues(ColumnInsertMeta *col_meta, 
   return values;
 }
 
-std::vector<Value> TableGenerator::MakeValues(ColumnInsertMeta *col_meta, uint32_t count) {
+auto TableGenerator::MakeValues(ColumnInsertMeta *col_meta, uint32_t count) -> std::vector<Value> {
   std::vector<Value> values;
   switch (col_meta->type_) {
     case TypeId::TINYINT:
@@ -160,6 +160,13 @@ void TableGenerator::GenerateTestTables() {
       {"empty_table3",
        0,
        {{"colA", TypeId::BIGINT, false, Dist::Serial, 0, 0}, {"colB", TypeId::INTEGER, false, Dist::Uniform, 0, 9}}},
+  
+      // Table 4
+      {"new_test_4",
+       100,
+       {{"colA", TypeId::BIGINT, false, Dist::Serial, 0, 0, 50},
+        {"colB", TypeId::INTEGER, true, Dist::Serial, 0, 0},
+        {"colC", TypeId::INTEGER, true, Dist::Uniform, 0, 9}}},
   };
 
   for (auto &table_meta : insert_meta) {

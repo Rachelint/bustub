@@ -27,6 +27,14 @@ void NestedLoopJoinExecutor::Init() { out_executor_->Init(); }
 
 // rid not used
 bool NestedLoopJoinExecutor::Next(Tuple *tuple, RID *rid) {
+  // return tuple in cache first
+  if (!join_tuple_cache_.empty()) {
+    *tuple = join_tuple_cache_.front();
+    join_tuple_cache_.pop();
+    return true;
+  }
+
+  // get new join tuple
   Tuple out_tuple;
   RID out_rid;
   // TODO(kamille): may be NULL?
@@ -34,25 +42,34 @@ bool NestedLoopJoinExecutor::Next(Tuple *tuple, RID *rid) {
     return false;
   }
 
-  // init in_loop_ and loop
+  // find joinable inner
   in_executor_->Init();
-  bool is_join = false;
+  bool inner_null = true;
   Tuple in_tuple;
   RID in_rid;
   while (in_executor_->Next(&in_tuple, &in_rid)) {
+    if (inner_null) {
+      inner_null = false;
+    }
+
     if (plan_->Predicate()
             ->EvaluateJoin(&out_tuple, out_executor_->GetOutputSchema(), &in_tuple, in_executor_->GetOutputSchema())
             .GetAs<bool>()) {
-      *tuple = GetJoinTuple(out_tuple, in_tuple);
-      is_join = true;
+      join_tuple_cache_.push(GetJoinTuple(out_tuple, in_tuple));
     }
   }
-
-  // can not find joinable inner tuple
-  if (!is_join) {
-    *tuple = Tuple();
+  if (inner_null) {
+    return false;
   }
 
+  // not found and recur
+  if (join_tuple_cache_.empty()) {
+    return Next(tuple, rid);
+  }
+
+  // found and process
+  *tuple = join_tuple_cache_.front();
+  join_tuple_cache_.pop();
   return true;
 }
 

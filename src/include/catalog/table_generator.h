@@ -74,6 +74,9 @@ class TableGenerator {
      */
     ColumnInsertMeta(const char *name, const TypeId type, bool nullable, Dist dist, uint64_t min, uint64_t max)
         : name_(name), type_(type), nullable_(nullable), dist_(dist), min_(min), max_(max) {}
+
+    ColumnInsertMeta(const char *name, const TypeId type, bool nullable, Dist dist, uint64_t min, uint64_t max, uint64_t serial_counter)
+      : name_(name), type_(type), nullable_(nullable), dist_(dist), min_(min), max_(max), serial_counter_(serial_counter) {}
   };
 
   /**
@@ -103,10 +106,10 @@ class TableGenerator {
 
   void FillTable(TableInfo *info, TableInsertMeta *table_meta);
 
-  std::vector<Value> MakeValues(ColumnInsertMeta *col_meta, uint32_t count);
+  auto MakeValues(ColumnInsertMeta *col_meta, uint32_t count) -> std::vector<Value>;
 
   template <typename CppType>
-  std::vector<Value> GenNumericValues(ColumnInsertMeta *col_meta, uint32_t count);
+  auto GenNumericValues(ColumnInsertMeta *col_meta, uint32_t count) -> std::vector<Value>;
 
  private:
   ExecutorContext *exec_ctx_;

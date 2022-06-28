@@ -16,11 +16,11 @@
 #include "common/logger.h"
 
 namespace bustub {
-page_id_t HashTableDirectoryPage::GetPageId() const { return page_id_; }
+auto HashTableDirectoryPage::GetPageId() const -> page_id_t { return page_id_; }
 
 void HashTableDirectoryPage::SetPageId(bustub::page_id_t page_id) { page_id_ = page_id; }
 
-lsn_t HashTableDirectoryPage::GetLSN() const { return lsn_; }
+auto HashTableDirectoryPage::GetLSN() const -> lsn_t { return lsn_; }
 
 void HashTableDirectoryPage::SetLSN(lsn_t lsn) { lsn_ = lsn; }
 

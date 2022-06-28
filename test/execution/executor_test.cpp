@@ -87,7 +87,7 @@ using ComparatorType = GenericComparator<8>;
 using HashFunctionType = HashFunction<KeyType>;
 
 // SELECT col_a, col_b FROM test_1 WHERE col_a < 500
-TEST_F(ExecutorTest, DISABLED_SimpleSeqScanTest) {
+TEST_F(ExecutorTest, SimpleSeqScanTest) {
   // Construct query plan
   TableInfo *table_info = GetExecutorContext()->GetCatalog()->GetTable("test_1");
   const Schema &schema = table_info->schema_;
@@ -111,7 +111,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleSeqScanTest) {
 }
 
 // INSERT INTO empty_table2 VALUES (100, 10), (101, 11), (102, 12)
-TEST_F(ExecutorTest, DISABLED_SimpleRawInsertTest) {
+TEST_F(ExecutorTest, SimpleRawInsertTest) {
   // Create Values to insert
   std::vector<Value> val1{ValueFactory::GetIntegerValue(100), ValueFactory::GetIntegerValue(10)};
   std::vector<Value> val2{ValueFactory::GetIntegerValue(101), ValueFactory::GetIntegerValue(11)};
@@ -153,7 +153,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleRawInsertTest) {
 }
 
 // INSERT INTO empty_table2 SELECT col_a, col_b FROM test_1 WHERE col_a < 500
-TEST_F(ExecutorTest, DISABLED_SimpleSelectInsertTest) {
+TEST_F(ExecutorTest, SimpleSelectInsertTest) {
   const Schema *out_schema1;
   std::unique_ptr<AbstractPlanNode> scan_plan1;
   {
@@ -205,7 +205,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleSelectInsertTest) {
 }
 
 // INSERT INTO empty_table2 VALUES (100, 10), (101, 11), (102, 12)
-TEST_F(ExecutorTest, DISABLED_SimpleRawInsertWithIndexTest) {
+TEST_F(ExecutorTest, SimpleRawInsertWithIndexTest) {
   // Create Values to insert
   std::vector<Value> val1{ValueFactory::GetIntegerValue(100), ValueFactory::GetIntegerValue(10)};
   std::vector<Value> val2{ValueFactory::GetIntegerValue(101), ValueFactory::GetIntegerValue(11)};
@@ -270,7 +270,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleRawInsertWithIndexTest) {
 }
 
 // UPDATE test_3 SET colB = colB + 1;
-TEST_F(ExecutorTest, DISABLED_SimpleUpdateTest) {
+TEST_F(ExecutorTest, SimpleUpdateTest) {
   // Construct a sequential scan of the table
   const Schema *out_schema{};
   std::unique_ptr<AbstractPlanNode> scan_plan{};
@@ -329,7 +329,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleUpdateTest) {
 }
 
 // DELETE FROM test_1 WHERE col_a == 50;
-TEST_F(ExecutorTest, DISABLED_SimpleDeleteTest) {
+TEST_F(ExecutorTest, SimpleDeleteTest) {
   // Construct query plan
   auto table_info = GetExecutorContext()->GetCatalog()->GetTable("test_1");
   auto &schema = table_info->schema_;
@@ -374,7 +374,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleDeleteTest) {
 }
 
 // SELECT test_1.col_a, test_1.col_b, test_2.col1, test_2.col3 FROM test_1 JOIN test_2 ON test_1.col_a = test_2.col1;
-TEST_F(ExecutorTest, DISABLED_SimpleNestedLoopJoinTest) {
+TEST_F(ExecutorTest, SimpleNestedLoopJoinTest) {
   const Schema *out_schema1;
   std::unique_ptr<AbstractPlanNode> scan_plan1;
   {
@@ -418,7 +418,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleNestedLoopJoinTest) {
 }
 
 // SELECT test_4.colA, test_4.colB, test_6.colA, test_6.colB FROM test_4 JOIN test_6 ON test_4.colA = test_6.colA;
-TEST_F(ExecutorTest, DISABLED_SimpleHashJoinTest) {
+TEST_F(ExecutorTest, SimpleHashJoinTest) {
   // Construct sequential scan of table test_4
   const Schema *out_schema1{};
   std::unique_ptr<AbstractPlanNode> scan_plan1{};
@@ -487,7 +487,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleHashJoinTest) {
 }
 
 // SELECT COUNT(col_a), SUM(col_a), min(col_a), max(col_a) from test_1;
-TEST_F(ExecutorTest, DISABLED_SimpleAggregationTest) {
+TEST_F(ExecutorTest, SimpleAggregationTest) {
   const Schema *scan_schema;
   std::unique_ptr<AbstractPlanNode> scan_plan;
   {
@@ -537,7 +537,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleAggregationTest) {
 }
 
 // SELECT count(col_a), col_b, sum(col_c) FROM test_1 Group By col_b HAVING count(col_a) > 100
-TEST_F(ExecutorTest, DISABLED_SimpleGroupByAggregation) {
+TEST_F(ExecutorTest, SimpleGroupByAggregation) {
   const Schema *scan_schema;
   std::unique_ptr<AbstractPlanNode> scan_plan;
   {
@@ -590,7 +590,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleGroupByAggregation) {
 }
 
 // SELECT colA, colB FROM test_3 LIMIT 10
-TEST_F(ExecutorTest, DISABLED_SimpleLimitTest) {
+TEST_F(ExecutorTest, SimpleLimitTest) {
   auto *table_info = GetExecutorContext()->GetCatalog()->GetTable("test_3");
   auto &schema = table_info->schema_;
 
@@ -618,7 +618,7 @@ TEST_F(ExecutorTest, DISABLED_SimpleLimitTest) {
 }
 
 // SELECT DISTINCT colC FROM test_7
-TEST_F(ExecutorTest, DISABLED_SimpleDistinctTest) {
+TEST_F(ExecutorTest, SimpleDistinctTest) {
   auto *table_info = GetExecutorContext()->GetCatalog()->GetTable("test_7");
   auto &schema = table_info->schema_;
 
@@ -653,4 +653,75 @@ TEST_F(ExecutorTest, DISABLED_SimpleDistinctTest) {
   ASSERT_TRUE(std::equal(results.cbegin(), results.cend(), expected.cbegin()));
 }
 
+// SELECT test_4.colA, test_4.colB, test_6.colA, test_6.colB FROM test_4 JOIN test_6 ON test_4.colA = test_6.colA;
+TEST_F(ExecutorTest, LimitHashJoinTest) {
+  // Construct sequential scan of table test_4
+  const Schema *out_schema1{};
+  std::unique_ptr<AbstractPlanNode> scan_plan1{};
+  {
+    auto *table_info = GetExecutorContext()->GetCatalog()->GetTable("new_test_4");
+    auto &schema = table_info->schema_;
+    auto *col_a = MakeColumnValueExpression(schema, 0, "colA");
+    auto *col_b = MakeColumnValueExpression(schema, 0, "colB");
+    out_schema1 = MakeOutputSchema({{"colA", col_a}, {"colB", col_b}});
+    scan_plan1 = std::make_unique<SeqScanPlanNode>(out_schema1, nullptr, table_info->oid_);
+  }
+
+  // Construct sequential scan of table test_6
+  const Schema *out_schema2{};
+  std::unique_ptr<AbstractPlanNode> scan_plan2{};
+  {
+    auto *table_info = GetExecutorContext()->GetCatalog()->GetTable("test_6");
+    auto &schema = table_info->schema_;
+    auto *col_a = MakeColumnValueExpression(schema, 0, "colA");
+    auto *col_b = MakeColumnValueExpression(schema, 0, "colB");
+    out_schema2 = MakeOutputSchema({{"colA", col_a}, {"colB", col_b}});
+    scan_plan2 = std::make_unique<SeqScanPlanNode>(out_schema2, nullptr, table_info->oid_);
+  }
+
+  // Construct the join plan
+  const Schema *out_schema{};
+  std::unique_ptr<HashJoinPlanNode> join_plan{};
+  {
+    // Columns from Table 4 have a tuple index of 0 because they are the left side of the join (outer relation)
+    auto *table4_col_a = MakeColumnValueExpression(*out_schema1, 0, "colA");
+    auto *table4_col_b = MakeColumnValueExpression(*out_schema1, 0, "colB");
+
+    // Columns from Table 6 have a tuple index of 1 because they are the right side of the join (inner relation)
+    auto *table6_col_a = MakeColumnValueExpression(*out_schema2, 1, "colA");
+    auto *table6_col_b = MakeColumnValueExpression(*out_schema2, 1, "colB");
+
+    out_schema = MakeOutputSchema({{"table4_colA", table4_col_a},
+                                   {"table4_colB", table4_col_b},
+                                   {"table6_colA", table6_col_a},
+                                   {"table6_colB", table6_col_b}});
+
+    // Join on table4.colA = table6.colA
+    join_plan = std::make_unique<HashJoinPlanNode>(
+        out_schema, std::vector<const AbstractPlanNode *>{scan_plan1.get(), scan_plan2.get()}, table4_col_a,
+        table6_col_a);
+  }
+
+  // Construct the limit plan
+  auto limit_plan = std::make_unique<LimitPlanNode>(out_schema, join_plan.get(), 50);
+
+  std::vector<Tuple> result_set{};
+  GetExecutionEngine()->Execute(limit_plan.get(), &result_set, GetTxn(), GetExecutorContext());
+  ASSERT_EQ(result_set.size(), 50);
+
+  // for (const auto &tuple : result_set) {
+  //   const auto t4_col_a = tuple.GetValue(out_schema, out_schema->GetColIdx("table4_colA")).GetAs<int64_t>();
+  //   const auto t4_col_b = tuple.GetValue(out_schema, out_schema->GetColIdx("table4_colB")).GetAs<int32_t>();
+  //   const auto t6_col_a = tuple.GetValue(out_schema, out_schema->GetColIdx("table6_colA")).GetAs<int64_t>();
+  //   const auto t6_col_b = tuple.GetValue(out_schema, out_schema->GetColIdx("table6_colB")).GetAs<int32_t>();
+
+  //   // Join keys should be equiavlent
+  //   ASSERT_EQ(t4_col_a, t6_col_a);
+
+  //   // In case of Table 4 and Table 6, corresponding columns also equal
+  //   ASSERT_LT(t4_col_b, TEST4_SIZE);
+  //   ASSERT_LT(t6_col_b, TEST6_SIZE);
+  //   ASSERT_EQ(t4_col_b, t6_col_b);
+  // }
+}
 }  // namespace bustub

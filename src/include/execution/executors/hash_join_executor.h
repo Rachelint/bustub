@@ -13,8 +13,10 @@
 #pragma once
 
 #include <memory>
+#include <queue>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include "common/util/hash_util.h"
 #include "execution/executor_context.h"
@@ -79,19 +81,22 @@ class HashJoinExecutor : public AbstractExecutor {
    * @param[out] rid The next tuple RID produced by the join
    * @return `true` if a tuple was produced, `false` if there are no more tuples
    */
-  bool Next(Tuple *tuple, RID *rid) override;
+  auto Next(Tuple *tuple, RID *rid) -> bool override;
 
   /** @return The output schema for the join */
-  const Schema *GetOutputSchema() override { return plan_->OutputSchema(); };
+  auto GetOutputSchema() -> const Schema * override { return plan_->OutputSchema(); };
 
  private:
   Tuple GetJoinTuple(const Tuple &out_tuple, const Tuple &in_tuple);
+  void MakeHashTable();
 
   /** The NestedLoopJoin plan node to be executed. */
   const HashJoinPlanNode *plan_;
   std::unique_ptr<AbstractExecutor> out_executor_;
   std::unique_ptr<AbstractExecutor> in_executor_;
-  std::unordered_map<JoinKey, Tuple> in_tuples_;
+  std::unordered_map<JoinKey, std::vector<Tuple>> in_tuples_;
+  bool in_tuples_init_;
+  std::queue<Tuple> join_tuple_cache_;
 };
 
 }  // namespace bustub

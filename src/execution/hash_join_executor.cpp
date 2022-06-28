@@ -22,20 +22,23 @@ HashJoinExecutor::HashJoinExecutor(ExecutorContext *exec_ctx, const HashJoinPlan
     : AbstractExecutor(exec_ctx),
       plan_(plan),
       out_executor_(std::move(left_child)),
-      in_executor_(std::move(right_child)) {}
+      in_executor_(std::move(right_child)),
+      in_tuples_init_(false) {}
 
 void HashJoinExecutor::Init() {
   // child executor init
   out_executor_->Init();
   in_executor_->Init();
+}
 
+void HashJoinExecutor::MakeHashTable() {
   // build hashtable by in_executor
   Tuple tuple;
   RID rid;
   while (in_executor_->Next(&tuple, &rid)) {
     const Schema *in_schema = in_executor_->GetOutputSchema();
     JoinKey join_key{plan_->RightJoinKeyExpression()->Evaluate(&tuple, in_schema)};
-    in_tuples_[join_key] = tuple;
+    in_tuples_[join_key].push_back(tuple);
   }
 }
 
@@ -58,19 +61,45 @@ Tuple HashJoinExecutor::GetJoinTuple(const Tuple &out_tuple, const Tuple &in_tup
 }
 
 bool HashJoinExecutor::Next(Tuple *tuple, RID *rid) {
+  // find in cache first
+  if (!join_tuple_cache_.empty()) {
+    *tuple = join_tuple_cache_.front();
+    join_tuple_cache_.pop();
+    return true;
+  }
+
+  // get first out tuple
   Tuple out_tuple;
   RID out_rid;
-
   while (!out_executor_->Next(&out_tuple, &out_rid)) {
     return false;
   }
 
-  // get join key
+  // build inner hashtable
+  if (!in_tuples_init_) {
+    MakeHashTable();
+    in_tuples_init_ = true;
+    // inner table empty
+    if (in_tuples_.empty()) {
+      return false;
+    }
+  }
+
   const Schema *out_schema = out_executor_->GetOutputSchema();
   JoinKey join_key{plan_->LeftJoinKeyExpression()->Evaluate(&out_tuple, out_schema)};
-  BUSTUB_ASSERT(0 != in_tuples_.count(join_key), "invalid join");
-  *tuple = GetJoinTuple(out_tuple, in_tuples_[join_key]);
+  if (0 == in_tuples_.count(join_key)) {
+    // not foudn and recur
+    return Next(tuple, rid);
+  }
 
+  // found, process and return
+  const auto &in_tuple_vec = in_tuples_[join_key];
+  for (const auto &in_tuple : in_tuple_vec) {
+    join_tuple_cache_.push(GetJoinTuple(out_tuple, in_tuple));
+  }
+  BUSTUB_ASSERT(!join_tuple_cache_.empty(), "impossible empty");
+  *tuple = join_tuple_cache_.front();
+  join_tuple_cache_.pop();
   return true;
 }
 

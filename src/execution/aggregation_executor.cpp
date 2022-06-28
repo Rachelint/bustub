@@ -22,12 +22,15 @@ AggregationExecutor::AggregationExecutor(ExecutorContext *exec_ctx, const Aggreg
       plan_(plan),
       child_(std::move(child)),
       aht_(plan_->GetAggregates(), plan_->GetAggregateTypes()),
-      aht_iterator_(aht_.End()) {}
+      aht_iterator_(aht_.End()),
+      is_table_init_(false) {}
 
 void AggregationExecutor::Init() {
   // init child
   child_->Init();
+}
 
+void AggregationExecutor::MakeHashTable() {
   // loop child(seq) and get all tuples
   Tuple tuple;
   RID rid;
@@ -41,6 +44,11 @@ void AggregationExecutor::Init() {
 }
 
 bool AggregationExecutor::Next(Tuple *tuple, RID *rid) {
+  if (!is_table_init_) {
+    MakeHashTable();
+    is_table_init_ = true;
+  }
+
   // get next
   while (true) {
     if (aht_iterator_ == aht_.End()) {
@@ -71,6 +79,6 @@ bool AggregationExecutor::Next(Tuple *tuple, RID *rid) {
   return true;
 }
 
-const AbstractExecutor *AggregationExecutor::GetChildExecutor() const { return child_.get(); }
+auto AggregationExecutor::GetChildExecutor() const -> const AbstractExecutor * { return child_.get(); }
 
 }  // namespace bustub
